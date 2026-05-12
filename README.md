@@ -53,10 +53,6 @@ table_tennis_final/
         └── eval/evaluations.npz                   eval-time return curve
 ```
 
-Per the project brief, the only files containing newly-written submission code
-are `one_player_game.py` and `two_player_game.py`. Everything else is either
-development tooling or provided-by-course material.
-
 ---
 
 ## Quick start
