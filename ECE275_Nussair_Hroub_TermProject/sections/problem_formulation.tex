@@ -1,0 +1,99 @@
+\section{Problem Formulation}
+\label{sec:problem}
+
+\subsection{System description}
+
+The simulated system consists of:
+\begin{itemize}
+  \item One (single-player) or two (two-player) KUKA LBR iiwa~7 robots,
+        each a 7-DOF revolute manipulator with joint state
+        $\jq\in\R^{7}$, $\jqdot\in\R^{7}$ and joint limits
+        $\jq^{\mathrm{lo}}_{i}\le\jq_{i}\le\jq^{\mathrm{hi}}_{i}$.
+  \item A rigid flat-disk paddle attached to the end-effector via a fixed
+        constraint at offset $\mathbf{p}_{\mathrm{pe}}=[0,0,0.05]^{\!\top}$
+        in the EE frame.
+  \item A spherical ball with state
+        $\bball(t),\,\vball(t)\in\R^{3}$.
+        Between contacts it obeys gravity-only projectile motion
+        \begin{equation}
+          \ddot{\bball}(t)=-g\,\mathbf{e}_{z},\quad g=9.81\,\mathrm{m/s^{2}},
+          \label{eq:gravity}
+        \end{equation}
+        with small linear damping in the simulator.
+  \item A regulation-size table whose surface lies at
+        $z=z_{T}=0.76\,\mathrm{m}$, with a net of height
+        $z_{N}=0.9125\,\mathrm{m}$ at $x=0$.
+\end{itemize}
+
+The world frame is right-handed with the table running along the $x$-axis.
+Robot~1 (Player~0) is based at $\mathbf{p}_{1}=(-2.0,0,0.73)$ with zero
+yaw and defends $x<0$. Robot~2 (Player~1) is based at
+$\mathbf{p}_{2}=(+2.0,0,0.73)$ rotated by yaw $\pi$ about $z$ and defends
+$x>0$.
+
+\subsection{Observation and action spaces}
+
+At every $1/240$\,s simulator step the agent receives the dictionary
+\[
+  \mathbf{o}=\bigl(\bball,\vball,\jq,\jqdot,\;\text{table\_info},\;\text{player\_side}\bigr),
+\]
+where ball state and own joint state are the relevant signals for control.
+The agent emits a target configuration $\jq^{\mathrm{cmd}}\in\R^{7}$.
+The simulator's joint controller is in \emph{position mode} with a
+\textsc{maxVelocity} cap of $12$\,rad/s per joint and a
+$250$\,N$\,$m torque cap, so the realised joint trajectory is the
+position-controlled response to a sequence of setpoints rather than a
+torque or velocity profile.
+
+\subsection{Rules and termination}
+
+A rally proceeds under the rules below, encoded in the provided
+\texttt{SimulationManager}:
+\begin{itemize}
+  \item The receiving side must return the ball over the net such that it
+        bounces on the opponent's half exactly once before the opponent
+        contacts it.
+  \item Faults that end the rally:
+        \emph{double bounce} on a player's own side,
+        \emph{ball hits the net},
+        \emph{ball goes out of bounds},
+        \emph{ball drops below} $z=0.5\,\mathrm{m}$,
+        or \emph{rally timeout} ($10\,\mathrm{s}$).
+  \item Scoring: a game ends at $11$ points with a $2$-point lead.
+  \item In single-player mode the ball is launched from
+        $\mathbf{p}_{0}^{\mathrm{serve}}=(+0.6,0,1.1)$ with nominal
+        velocity $(-2.8,0,+1.0)$ plus Gaussian noise
+        $\sigma_{xy}=0.3$, $\sigma_{z}=0.15$. The receiver's only goal
+        is the \emph{successful\_return} fault.
+\end{itemize}
+
+\subsection{Algorithm-design problem}
+
+Let $\jq^{\mathrm{cmd}}_{t}\in\R^{7}$ be the joint setpoint commanded at
+step $t$. The robot's controller produces actual joint trajectories
+$\jq(t)$ that drive the paddle pose
+$\mathbf{x}_{p}(t)\in SE(3)$ through the forward-kinematics map
+$\mathbf{x}_{p}=\Phi(\jq)$. The ball state propagates under~\eqref{eq:gravity}
+between contacts and according to a restitution model when it touches the
+table or paddle. We seek a control policy
+\begin{equation}
+  \pi:\mathbf{o}\mapsto\jq^{\mathrm{cmd}},
+  \label{eq:policy}
+\end{equation}
+that maximises the expected number of \emph{successful\_return} events per
+rally (or, in two-player mode, the expected number of games won) subject
+to joint, workspace and net-clearance constraints. The policy must be
+deterministic from $\mathbf{o}$, may not query the opponent's joint state,
+and may not modify the simulator.
+
+The optimisation is hard for three reasons. First, the ball's actual
+trajectory differs from idealised projectile prediction because the
+PyBullet ball has linear damping and the table coefficient of restitution
+differs slightly from the nominal value, so the model is biased. Second,
+the controller is position-controlled with a velocity cap, so the
+realised Cartesian path is \emph{not} a free design variable --- it is the
+forward image of a joint-space linear interpolation. Third, the
+two-robot setup is geometrically symmetric, but the manipulator's
+inverse kinematics has multiple branches; naïvely sending the right-hand
+robot the mirror world target produces a different joint solution that
+yields a different (and worse) Cartesian swing path.

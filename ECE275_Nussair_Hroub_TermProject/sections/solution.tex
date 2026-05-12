@@ -1,0 +1,224 @@
+\section{Solution}
+\label{sec:solution}
+
+The controller is a deterministic, model-based planner. At each rally it
+\emph{locks} a swing plan as soon as the ball begins to head toward it,
+and then executes that plan open-loop in joint space. The decision to
+plan once and lock --- rather than continuously re-plan --- is deliberate:
+early experimentation showed that re-solving inverse kinematics on every
+control step caused the arm to chatter between two close IK branches and
+miss the ball entirely.
+
+Figure~\ref{fig:pipeline} summarises the pipeline; the rest of this
+section explains each block.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  block/.style={rectangle, draw=darkRed!85, fill=darkRed!8,
+                rounded corners=3pt, minimum height=10mm, minimum width=22mm,
+                align=center, font=\small\sffamily},
+  decision/.style={diamond, draw=darkRed!85, fill=darkRed!8,
+                   inner sep=1pt, align=center, font=\small\sffamily,
+                   aspect=2},
+  arrow/.style={-stealth, thick, darkRed!85},
+  node distance=8mm and 14mm,
+]
+  \node[block] (obs)   {Observation\\$\bball,\vball,\jq$};
+  \node[decision, right=of obs] (head) {coming\\to us?};
+  \node[block, right=of head]   (plan) {Build swing plan\\(\S\ref{sub:plan})};
+  \node[block, below=of plan]   (sched){Schedule swing\\(\S\ref{sub:sched})};
+  \node[block, left=of sched]   (exec) {Execute joint\\target};
+  \node[block, left=of exec]    (ready){Hold ready pose};
+
+  \draw[arrow] (obs)   -- (head);
+  \draw[arrow] (head)  -- node[above, font=\scriptsize]{yes} (plan);
+  \draw[arrow] (head)  |- node[left, font=\scriptsize, pos=0.7]{no} (ready);
+  \draw[arrow] (plan)  -- (sched);
+  \draw[arrow] (sched) -- (exec);
+  \draw[arrow] (ready) -- (exec);
+  \draw[arrow] (exec)  -- ++(0,-1.0) -| (obs);
+\end{tikzpicture}
+\caption{Per-step pipeline of the \texttt{RobotPlayer} controller.
+The plan is built at most once per rally; subsequent steps only execute
+the cached joint targets.}
+\label{fig:pipeline}
+\end{figure}
+
+\subsection{Ball-trajectory prediction}
+\label{sub:predict}
+
+Between contacts the ball obeys~\eqref{eq:gravity}. Given current state
+$(\bball_{0},\vball_{0})$ the trajectory is
+\begin{equation}
+  \bball(t)=\bball_{0}+\vball_{0}\,t-\tfrac{1}{2}g\,t^{2}\mathbf{e}_{z},\qquad
+  \vball(t)=\vball_{0}-g\,t\,\mathbf{e}_{z}.
+  \label{eq:projectile}
+\end{equation}
+The first table bounce occurs at the smallest positive root of
+$b_{z}(t)=z_{T}$, i.e.
+\begin{equation}
+  \tfrac{1}{2}g\,t_{B}^{2}-v_{0z}\,t_{B}+(b_{0z}-z_{T})=0
+  \;\Rightarrow\;
+  t_{B}=\frac{v_{0z}+\sqrt{v_{0z}^{2}-2g(b_{0z}-z_{T})}}{g}.
+  \label{eq:bounce}
+\end{equation}
+The bounce location is
+$\mathbf{b}_{B}=\bball(t_{B})$ and the pre-bounce vertical
+velocity is $v_{Bz}^{-}=v_{0z}-g\,t_{B}$. We model the
+table--ball contact as Newtonian restitution with coefficient
+$e_{B}=0.87$ (matched to the simulator within tuning tolerance), so the
+post-bounce vertical velocity is $v_{Bz}^{+}=e_{B}|v_{Bz}^{-}|$ while the
+horizontal velocity is preserved up to a small empirical damping
+$\eta_{V}=0.82$:
+\begin{equation}
+  \vball^{+}=\bigl(\eta_{V}v_{0x},\;v_{0y},\;e_{B}|v_{Bz}^{-}|\bigr).
+  \label{eq:postbounce}
+\end{equation}
+The damping factor $\eta_{V}$ corrects for PyBullet's small linear
+damping on the ball, which causes the realised $|v_{x}|$ to decay
+roughly $15$--$18\%$ over a typical $0.7$\,s flight.
+
+From the bounce location we propagate~\eqref{eq:projectile} forward to
+the agent's \emph{strike plane}
+\[
+  x_{s}=b_{\mathrm{base}}^{x}+(-s)\,d_{\mathrm{strike}},
+  \qquad s=\begin{cases}-1 & \text{Player 0}\\+1 & \text{Player 1}\end{cases},
+\]
+to find the intercept time $t_{s}$ and the predicted strike point
+$\mathbf{p}_{s}=(x_{s},y_{s},z_{s})$. The strike $z$ is clamped to a
+safe envelope $[z^{\min},z^{\max}]=[0.96,1.20]$\,m to keep the paddle
+away from the table and within reach.
+
+\subsection{Strike pose and swing geometry}
+\label{sub:plan}
+
+The paddle face must point toward the opponent and be tilted upward by an
+angle $\phi$ to help the ball clear the net. In the world frame this
+sets a target paddle orientation
+\begin{equation}
+  \mathbf{n}_{p}=\bigl(-s\cos\phi,\;0,\;\sin\phi\bigr),
+\end{equation}
+where $s=\pm 1$ is the side sign defined above and
+$\phi=0.65$\,rad ($\approx 37^{\circ}$) was selected by the parameter
+sweep of Section~\ref{sub:tune}. The desired paddle EE pose at the
+strike point is therefore $(\mathbf{p}_{s},\,\mathbf{n}_{p})$.
+
+To deliver momentum to the ball we additionally specify two staging
+poses around the strike point:
+\begin{align}
+  \text{windup}    \quad &\mathbf{p}_{w}=\mathbf{p}_{s}+(s\,d_{W},0,-0.03), \\
+  \text{follow-through}\quad &\mathbf{p}_{f}=\mathbf{p}_{s}-(s\,d_{F},0,-d_{L}),
+\end{align}
+with $d_{W}=0.05$, $d_{F}=0.10$ and lift $d_{L}=0.12$\,m. The arm holds
+$\mathbf{p}_{w}$ behind the strike point, then sweeps forward through
+$\mathbf{p}_{s}$ to $\mathbf{p}_{f}$. Because the paddle is rigidly
+attached, this sweep imparts paddle velocity at contact (in the
+$+s$-toward-opponent direction and slightly upward), producing a
+returnable shot without needing impedance or torque control.
+
+\subsection{Inverse kinematics with branch consistency}
+\label{sub:ik}
+
+The paddle pose is a six-dimensional task on a seven-joint arm, so the
+manipulator is kinematically redundant. PyBullet's
+\texttt{calculateInverseKinematics} uses damped-least-squares with a
+rest-pose null-space bias~\cite{buss2004ik}; given a target
+$(\mathbf{p},\mathbf{R})$ it returns a joint vector $\jq^{\star}$ close
+to the rest pose. Two practical issues had to be solved.
+
+\paragraph{Branch consistency: the mirror-IK trick.}
+For the right-hand robot (base yaw $\pi$ about $z$), PyBullet's IK
+seeded from the live joint state converges to a contorted joint branch
+in which the wrist joint $\theta_{7}$ sits near its limit
+$+\pi$~rad. Although the end-effector position and orientation match
+the request \emph{at the strike point}, the linear interpolation in
+joint space between the windup branch and the follow-through branch
+produces a Cartesian path with a $\sim 10$\,cm side-to-side excursion in
+$y$; the paddle misses the ball entirely.
+
+The two robot bases are placed symmetrically about the origin, so the
+remedy is purely geometric. Both robots are kinematically identical:
+applying the same joint vector $\jq$ to the unrotated base
+$\mathbf{R}_{1}=\mathbf{I}$ and to the rotated base
+$\mathbf{R}_{2}=\eR{z}(\pi)$ produces end-effector poses related by
+$\eR{z}(\pi)$. We therefore always solve IK on Robot~1's kinematic
+chain. For Player~1 (Robot~2) we first mirror the world target through
+the origin,
+\begin{equation}
+  (x,y,z)\longmapsto(-x,-y,z),
+  \label{eq:mirror}
+\end{equation}
+run IK against Robot~1 with the mirrored target, and apply the resulting
+joint vector to Robot~2. The composition
+$\eR{z}(\pi)\cdot\Phi_{1}(\jq)$ recovers the desired mirror world pose
+without ever asking PyBullet to solve a yaw-$\pi$ IK. As shown later
+(Section~\ref{sub:results_p1}), this single change raises Player~1's
+paddle-contact rate from $11.8\%$ to $86.3\%$.
+
+\paragraph{Snapshot/restore.}
+Because PyBullet's IK is iterative and seeded from the robot's
+\emph{current} joint state, calling it during a high-velocity rally
+sometimes lands on a different branch than the windup call landed on.
+To make consecutive IK calls deterministic we snapshot Robot~1's live
+joint positions and velocities, reset the joints to the ready pose for
+the IK call, then restore them. No \texttt{stepSimulation} runs in the
+intervening window, so the physics state is unchanged.
+
+\subsection{Swing scheduling}
+\label{sub:sched}
+
+Given the predicted intercept time $t_{a}=t_{B}+t_{s}$ from the moment
+the plan is built, the swing fires
+$T_{\mathrm{sw}}/2$ seconds early so that the paddle reaches the strike
+point at the midpoint of the windup--follow sweep:
+\begin{equation}
+  n_{\mathrm{fire}}=\max\!\Bigl(0,\;
+   \mathrm{round}\!\bigl((t_{a}-T_{\mathrm{sw}}/2)/h\bigr)\Bigr),
+  \qquad h=1/240\,\mathrm{s},\;T_{\mathrm{sw}}=0.22\,\mathrm{s}.
+\end{equation}
+For $n<n_{\mathrm{fire}}$ the controller commands $\jq_{w}$
+(IK of $\mathbf{p}_{w}$); for $n\ge n_{\mathrm{fire}}$ it commands
+$\jq_{f}$ (IK of $\mathbf{p}_{f}$). The simulator's position controller
+with cap $\dot{\theta}_{\max}=12$\,rad/s then drives the joints between
+these targets; with $T_{\mathrm{sw}}=0.22$\,s this comfortably resolves
+the largest joint excursion in the plan (about $0.9$\,rad).
+
+\subsection{Net-clearance guard}
+
+The bounce-side test of the original draft was too strict: short returns
+landing just past the net (e.g.\ predicted $b_{B}^{x}=+0.03$\,m) would
+be rejected even though they are physically returnable. We replaced the
+test with a direct \emph{net-clearance check}: if the ball is currently
+on the opponent's side, compute the time $t_{N}=-b_{0x}/v_{0x}$ at which
+it crosses $x=0$ and the corresponding height
+\[
+  z_{N}^{\mathrm{ball}}=b_{0z}+v_{0z}\,t_{N}-\tfrac{1}{2}g\,t_{N}^{2}.
+\]
+Reject the plan only if $z_{N}^{\mathrm{ball}}<0.94$\,m (net top plus a
+small ball-radius margin). This single change brought Player~1's plan
+acceptance rate from $\sim 4\%$ to a useful fraction without producing
+any spurious swings (a ball that fails the clearance test will simply
+hit the net regardless of what the arm does).
+
+\subsection{Hyperparameter tuning by exhaustive search}
+\label{sub:tune}
+
+The controller exposes eight geometric and timing constants ---
+$d_{\mathrm{strike}}$, $\phi$, $d_{W}$, $d_{F}$, $d_{L}$,
+$T_{\mathrm{sw}}$, $z^{\min}$ and $e_{B}$ --- whose physically optimal
+values depend on quantities (joint controller dynamics, paddle
+restitution, ball damping) that are not directly measurable from the
+simulator. We sweep all $4\times 3\times 3\times 2\times 3\times 4\times 3\times 2=5184$
+combinations on a coarse grid, evaluating each on five seeds in
+single-player mode. The sweep is parallelised across 16 worker
+processes via \texttt{param\_search.py} and \texttt{param\_search\_runner.py}
+and completes in about 16 minutes.
+
+Rather than pick the single best-rate configuration, we choose the
+most robust one in the top tier: for each configuration we average its
+return rate with that of its grid neighbours (configs differing in
+exactly one knob by one step), and select the configuration with the
+highest neighbourhood-averaged rate. This guards against picking a
+``spike'' that happens to score well on the five seeds but is brittle to
+small perturbations.

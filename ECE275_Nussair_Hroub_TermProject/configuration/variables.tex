@@ -1,0 +1,54 @@
+% configuration/variables.tex
+% Purpose: Variables for the document (university, course, student, term-project info)
+
+% ---- University Information ----
+\newcommand{\universityName}{King Abdullah University of Science and Technology}
+\newcommand{\departmentName}{Department of Electrical and Computer Engineering}
+
+% ---- Course Information ----
+\newcommand{\courseNumber}{ECE\;275}
+\newcommand{\courseName}{Robot Planning and Control}
+\newcommand{\academicTerm}{Spring 2026}
+\newcommand{\instructor}{Professor Shinkyu Park}
+
+% ---- Assignment Information ----
+\newcommand{\assignmentNumber}{}
+\newcommand{\assignmentAbbrv}{Term Project}
+\newcommand{\assignment}{Term Project}
+\newcommand{\projectTitle}{Robotic Table Tennis}
+\newcommand{\dueDate}{May 7, 2026}
+\newcommand{\submissionDate}{\today}
+
+% ---- Student Information ----
+\newcommand{\studentName}{Nussair Hroub}
+\newcommand{\studentEmail}{nussair.hroub@kaust.edu.sa}
+\newcommand{\studentId}{217511}
+
+% ---- Logo Information ----
+\newcommand{\logopath}{assets/KAUST_logo_digital_left.png}
+\newcommand{\logowidth}{2.5in}
+
+% ---- Header and Title Information ----
+\newcommand{\headerText}{\courseNumber\;-\;\assignmentAbbrv}
+\newcommand{\documentTitle}{\courseNumber \; \assignment\; - \; \studentName}
+
+% ---- Document Metadata ----
+\title{\documentTitle}
+\author{\studentName}
+\date{\today}
+
+% ---- Main Color ----
+\definecolor{darkRed}{rgb}{0.643, 0.114, 0.220}
+
+% Hyperref setup
+\hypersetup{
+    bookmarks=true,
+    colorlinks=true,
+    linkcolor=darkRed,
+    citecolor=darkRed,
+    filecolor=darkRed,
+    urlcolor=darkRed,
+    pdfborder={0 0 0},
+    pdftitle={\documentTitle},
+    pdfauthor={\studentName},
+}

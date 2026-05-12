@@ -1,0 +1,32 @@
+% configuration/commands.tex
+% Purpose: Customizes header, footer, and title page
+
+% ---- Header and Footer Setup ----
+\pagestyle{fancy}
+\fancyhf{}
+
+\fancyhead[L]{\textsc{\headerText}}
+\fancyhead[R]{\textit{\nouppercase{\studentName}}}
+\fancyfoot[C]{\thepage}
+
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\fancypagestyle{plain}{
+  \fancyhf{}
+  \fancyfoot[C]{\thepage}
+  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+% ---- Section heading helpers (kept compatible with template) ----
+\newcommand{\problem}[1]{\large{\textbf{Question #1}}\\[0.2cm]\addcontentsline{toc}{section}{Problem #1}\normalsize}
+\newcommand{\solution}{\large{\textcolor{darkRed}{\textbf{Solution}}}\\[0.2cm]\normalsize}
+
+% ---- Math notation shortcuts used throughout the report ----
+\newcommand{\bball}{\mathbf{b}}            % ball position
+\newcommand{\vball}{\mathbf{v}}            % ball velocity
+\newcommand{\jq}{\boldsymbol{\theta}}      % joint vector
+\newcommand{\jqdot}{\dot{\boldsymbol{\theta}}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\eR}[1]{\mathbf{R}_{#1}}

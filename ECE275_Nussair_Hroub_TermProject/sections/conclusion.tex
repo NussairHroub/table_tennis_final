@@ -1,0 +1,28 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+We built a model-based, plan-once controller for the ECE 275 robotic
+table-tennis benchmark. The controller fuses closed-form ball
+prediction, geometric strike-pose specification, redundancy-resolving
+inverse kinematics with a mirror-IK construction that exploits the
+symmetry of the two-robot layout, and a timed windup--follow-through
+joint sequence. An $8$-dimensional parameter sweep selects the
+operating point.
+
+On the default simulator configuration the controller wins all five
+single-player games at an average return rate of $74\%$, beats the
+\texttt{simple} baseline $6$--$0$ from either side in two-player
+play, and is approximately even against itself. The mirror-IK
+construction alone lifts the right-hand robot's paddle-contact rate
+from $11.8\%$ to $86.3\%$, the largest single improvement across the
+project.
+
+\paragraph{Code submission.}
+As required by the project brief, only two files are submitted:
+\texttt{one\_player\_game.py} and \texttt{two\_player\_game.py}, each
+containing its own \texttt{RobotPlayer}. The simulator files were not
+modified. The controllers run via the standard commands
+\begin{lstlisting}[style=pythonstyle,language=bash,basicstyle=\ttfamily\small]
+python one_player_game.py --player robot --episodes 5
+python two_player_game.py --player1 robot --player2 robot --episodes 3
+\end{lstlisting}

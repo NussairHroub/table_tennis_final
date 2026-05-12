@@ -1,0 +1,126 @@
+% configuration/packages.tex
+
+% ------------------------
+% ENCODING AND LANGUAGE PACKAGES
+% ------------------------
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[utf8]{inputenc}
+\usepackage{ulem}
+
+% ------------------------
+% DOCUMENT LAYOUT AND SPACING
+% ------------------------
+\usepackage[margin=1in]{geometry}
+\usepackage{parskip}
+\usepackage{setspace}
+\usepackage{emptypage}
+\usepackage{multicol}
+\usepackage{multirow}
+\usepackage{afterpage}
+\usepackage{cancel}
+
+% ------------------------
+% COLOR AND GRAPHICS
+% ------------------------
+\usepackage[table,xcdraw]{xcolor}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{tikz}
+
+% ------------------------
+% BIBLIOGRAPHY
+% ------------------------
+\usepackage[backend=bibtex,style=ieee]{biblatex}
+\addbibresource{references.bib}
+
+% ------------------------
+% MATH PACKAGES
+% ------------------------
+\usepackage{amsmath, amsthm, amssymb, amsfonts}
+\usepackage{bm}
+\usepackage{fix-cm}
+
+% ------------------------
+% TABLES
+% ------------------------
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{longtable}
+\usepackage{tabularx}
+
+% ------------------------
+% HEADERS AND FOOTERS
+% ------------------------
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+
+% ------------------------
+% HYPERLINKS
+% ------------------------
+\PassOptionsToPackage{hyphens}{url}
+\usepackage{hyperref}
+\usepackage{bookmark}
+\usepackage{cleveref}
+
+% ------------------------
+% CODE LISTINGS + BOXES
+% ------------------------
+\usepackage{listings}
+\usepackage[most]{tcolorbox}
+\tcbuselibrary{listings}
+
+% Python style
+\lstdefinestyle{pythonstyle}{
+    language=Python,
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{blue!70!black}\bfseries,
+    commentstyle=\color{green!45!black}\itshape,
+    stringstyle=\color{orange!60!black},
+    showstringspaces=false,
+    breaklines=true,
+    breakatwhitespace=false,
+    columns=fullflexible,
+    keepspaces=true,
+    tabsize=4,
+    extendedchars=false,
+    inputencoding=utf8,
+}
+
+% Solution box
+\newtcolorbox{sol}{
+  colback=gray!5!white,
+  colframe=gray!75!black,
+  fonttitle=\bfseries,
+  coltitle=black,
+  title=Solution,
+  sharp corners,
+  boxrule=0.8pt,
+  enhanced,
+  breakable,
+  before skip=10pt,
+  after skip=10pt,
+  coltext=blue,
+}
+
+% Python code box (using tcolorbox listings integration)
+\newtcblisting[auto counter, number within=section]{pythonbox}{
+  listing only,
+  listing style=pythonstyle,
+  colback=gray!5,
+  colframe=gray!30,
+  arc=4pt,
+  boxrule=0.5pt,
+  fonttitle=\bfseries\small,
+  coltitle=black,
+  title={Listing~\thetcbcounter: Python},
+  breakable,
+  enhanced,
+  before skip=8pt,
+  after skip=8pt,
+}
+
+% Miscellaneous
+\usepackage{subcaption}
+\usepackage{textcomp}

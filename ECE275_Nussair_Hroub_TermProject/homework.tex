@@ -1,0 +1,38 @@
+\documentclass[a4paper,12pt]{article}
+
+% ---- Configuration and Setup ----
+\input{./configuration/packages.tex}
+\input{./configuration/variables.tex}
+\input{./configuration/configs.tex}
+\input{./configuration/commands.tex}
+
+% TikZ libraries used by figures
+\usetikzlibrary{shapes.geometric, positioning, arrows.meta}
+
+% ---- Document Begins Here ----
+\begin{document}
+
+\input{titlepage.tex}
+\tableofcontents
+\newpage
+
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+% ---- Report Sections ----
+\input{sections/introduction}
+\input{sections/problem_formulation}
+\input{sections/solution}
+\input{sections/results}
+\input{sections/discussion}
+\input{sections/conclusion}
+
+% ---- References ----
+\nocite{*}
+\begingroup
+\sloppy
+\emergencystretch=3em
+\printbibliography
+\endgroup
+
+\end{document}

@@ -1,0 +1,73 @@
+# ─────────────────────────────────────────────────────────────────────────
+# Python
+# ─────────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+
+# ─────────────────────────────────────────────────────────────────────────
+# OS / editor cruft
+# ─────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# ─────────────────────────────────────────────────────────────────────────
+# Claude Code session artefacts
+# ─────────────────────────────────────────────────────────────────────────
+.claude/
+CLAUDE.md
+
+# ─────────────────────────────────────────────────────────────────────────
+# Not part of the term-project submission
+# ─────────────────────────────────────────────────────────────────────────
+# v1 simulator, superseded by v2
+pybullet_table_tennis_environment/
+# Unrelated assignment-02 LaTeX template
+ECE275_Nussair_Hroub_Assignment_02/
+# Course brief (private)
+term_project_2026*.pdf
+
+# ─────────────────────────────────────────────────────────────────────────
+# LaTeX build artefacts (we ship homework.pdf, not the intermediates)
+# ─────────────────────────────────────────────────────────────────────────
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.log
+*.lot
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+*-blx.bib
+homework.listing
+_*.data.minted
+
+# ─────────────────────────────────────────────────────────────────────────
+# RL training artefacts: keep only the best + final checkpoint per run
+# ─────────────────────────────────────────────────────────────────────────
+pybullet_table_tennis_environment_v2/runs/ppo_*/
+pybullet_table_tennis_environment_v2/runs/smoke_*/
+pybullet_table_tennis_environment_v2/runs/final_rl/
+pybullet_table_tennis_environment_v2/runs/*/checkpoints/
+pybullet_table_tennis_environment_v2/runs/*/train_1/
+pybullet_table_tennis_environment_v2/runs/*/train/
+
+# ─────────────────────────────────────────────────────────────────────────
+# Stale gifs from earlier prediction experiments
+# (we keep assets/single_game.gif and assets/double_game.gif)
+# ─────────────────────────────────────────────────────────────────────────
+pybullet_table_tennis_environment_v2/prediction.gif
+pybullet_table_tennis_environment_v2/prediction_overlay.gif

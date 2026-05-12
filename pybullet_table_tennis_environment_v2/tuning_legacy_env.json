@@ -1,0 +1,24 @@
+{
+  "_comment": "Tuning that achieved 88.71% return rate (5/5 games won, avg 12.4 serves) under the v1-style env settings the original v2 entry point applied for --player simple. Apply by setting these as RobotPlayer class attributes and constructing TableTennisEnv with the env_kwargs below.",
+  "robot_player_attrs": {
+    "_PADDLE_TILT":   0.70,
+    "_FT_LIFT":       0.14,
+    "_FT_DIST":       0.12,
+    "_WU_DIST":       0.06,
+    "_STRIKE_OFFSET": 0.92,
+    "_T_SWING":       0.45,
+    "_BALL_REST":     0.78,
+    "_VX_DAMP":       0.82,
+    "_Z_FLOOR":       0.85,
+    "_Z_CEIL":        1.20,
+    "_PADDLE_TILT_NOTE": "rad, ~40 degrees up from vertical"
+  },
+  "env_kwargs": {
+    "max_joint_force":              250.0,
+    "max_joint_velocity":           3.0,
+    "table_robot_collisions_enabled": true,
+    "paddle_restitution":           0.87,
+    "paddle_friction":              0.4
+  },
+  "_source": "Picked via param_search.py wider sweep (6480 configs, 5 seeds, 16 workers). Most-robust top-tier winner (neighborhood-averaged score)."
+}

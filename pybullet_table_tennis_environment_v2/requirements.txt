@@ -1,0 +1,12 @@
+# Core simulation
+pybullet>=3.2.7
+
+# Numerical / rendering
+numpy>=1.24
+matplotlib>=3.7
+
+# GUI backend for matplotlib over SSH X11 forwarding
+pyqt5>=5.15
+
+# Optional: RL interface (needed only for gym_wrapper.py)
+# gymnasium>=0.29

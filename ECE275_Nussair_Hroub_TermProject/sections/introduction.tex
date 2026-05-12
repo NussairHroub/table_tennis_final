@@ -1,0 +1,33 @@
+\section{Introduction}
+\label{sec:introduction}
+
+Robotic table tennis is a canonical benchmark for fast, contact-rich manipulation
+because every rally compresses perception, prediction, planning, and execution
+into a few hundred milliseconds. The agent must observe a fast-moving projectile,
+forecast its bounce, position a 7-DOF arm, and impart a precise momentum
+exchange through a small paddle face --- all while obeying joint limits and
+respecting the geometric constraints imposed by the table and the net.
+
+This term project addresses both phases of the ECE 275 robotic table tennis
+benchmark. In the \emph{single-player} phase, the robot is served balls and
+must return them past the net onto the opponent's half. In the
+\emph{two-player} phase, two robots play complete matches against each other,
+each subject to the same restrictions. The simulator is built on PyBullet and
+ships a KUKA LBR iiwa 7 manipulator with a rigidly attached paddle; the
+implementation lives in the \texttt{RobotPlayer} class inside
+\texttt{one\_player\_game.py} and \texttt{two\_player\_game.py}.
+
+We treat the problem as one of model-based planning rather than reactive
+tracking. The agent uses the physics it can predict (gravity, restitution) to
+\emph{lock} a swing plan as soon as the ball is heading its way, then executes
+the plan open-loop in joint space. Inverse kinematics with explicit
+null-space handling, a fixed strike plane, a time-scheduled
+windup--follow-through sweep, and an empirically tuned set of geometric
+parameters together produce a controller that wins every single-player game
+in the benchmark and competes successfully in the two-player matches.
+
+\paragraph{Report organisation.}
+Section~\ref{sec:problem} states the problem formally. Section~\ref{sec:solution}
+develops the algorithm. Section~\ref{sec:results} reports the simulator results.
+Section~\ref{sec:discussion} discusses the insights and the connection to course
+material, and Section~\ref{sec:conclusion} concludes.

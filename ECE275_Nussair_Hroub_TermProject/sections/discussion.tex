@@ -1,0 +1,94 @@
+\section{Discussion}
+\label{sec:discussion}
+
+\paragraph{Plan once, execute open-loop.}
+The biggest qualitative jump in performance came not from any particular
+parameter value but from the architectural decision to build the swing
+plan \emph{once} per rally and then execute it open-loop. Re-solving
+inverse kinematics on every $1/240$\,s step exposes the controller to
+small differences between consecutive IK solutions; with a redundant
+manipulator the solver can hop between neighbouring null-space branches,
+which the position-controlled joints faithfully track, and the resulting
+chatter wrecks the Cartesian path. Locking the plan reduces the problem
+to a single one-shot setpoint sequence that the joint controller can
+realise smoothly.
+
+\paragraph{Symmetry exploitation.}
+The mirror-IK trick of Section~\ref{sub:ik} is, with hindsight, an
+elementary application of the fact that the two robots share a
+kinematic chain and differ only in base orientation. Despite this it
+was the single fix that lifted Player~1's contact rate from $12\%$ to
+$86\%$. The lesson is that PyBullet's IK is a numerical black box: even
+with a deterministic seed, sufficiently symmetric problems can land on
+different branches because the solver perceives the world frame, not
+the base-local frame, and the rest-pose bias acts in joint space. When
+the analytic geometry is symmetric, it is cheaper to enforce the
+symmetry by construction than to hope the numerical solver discovers it.
+
+\paragraph{Tuning the model, not just the controller.}
+Two of the eight swept constants --- the effective restitution
+coefficient $e_{B}$ and the horizontal damping factor $\eta_{V}$ ---
+appear in the \emph{prediction} step rather than the control step.
+They are parameters of the world model used inside the planner. The
+sweep is therefore best understood not as finding the optimal
+controller for a known plant, but as jointly fitting the world model
+and the controller. The fact that $e_{B}=0.87$ won (rather than the
+nominal $0.93$ that the simulator advertises) and that $\eta_{V}=0.82$
+emerged from scratch are concrete evidence that a small mismatch
+between assumed and realised physics matters more than the precise
+choice of strike-plane location.
+
+\paragraph{Connection to course material.}
+The controller is built almost entirely from primitives covered in
+ECE 275:
+\begin{itemize}
+  \item \emph{Forward and inverse kinematics} of a serial 7-DOF
+        manipulator, including the use of damped least-squares with a
+        null-space bias to resolve redundancy.
+  \item \emph{Trajectory planning} as a sequence of waypoints in
+        Cartesian space, realised via joint-space interpolation under a
+        velocity-limited position controller.
+  \item \emph{Rigid-body collision modelling} with Newtonian
+        restitution to predict the post-bounce state of the ball.
+  \item \emph{Projectile dynamics} for prediction between contacts,
+        solved in closed form via the quadratic roots
+        of~\eqref{eq:bounce}.
+  \item \emph{Workspace and joint-limit awareness}, enforced both as
+        hard limits in IK and as soft clamps on the strike target.
+\end{itemize}
+Notably, we did \emph{not} use the inverse-dynamics
+$\tau = \mathbf{M}\ddot{\jq}+\mathbf{V}+\mathbf{G}$ that featured in
+Assignment~02. Because the simulator exposes only position-mode
+control, dynamic compensation happens inside the simulator's joint
+servo and cannot be tightened from the outside. The trade-off is that
+fine-grained shaping of impact forces is not available; we instead
+shape the impact \emph{geometrically} through windup--follow-through
+timing.
+
+\paragraph{Limitations and what is left on the table.}
+The most obvious open issues are:
+\begin{enumerate}
+  \item \emph{Lateral coverage}: the strike plane is fixed in $x$;
+        balls with large $|v_{y}|$ at bounce time still produce
+        excursions in $y$ that approach the workspace bound
+        ($\pm 0.50$\,m). A second-order correction --- tilting the
+        strike plane to track $v_{y}$ --- would help.
+  \item \emph{Recovery between swings in two-player mode}: between the
+        end of one rally and the start of the next, the controller
+        relaxes to the ready pose; for short, fast rallies the arm is
+        still in motion when the next ball is served. A short
+        ``reset'' interpolation tied to the
+        \texttt{WAITING\_SERVE} state would improve consistency.
+  \item \emph{Spin}: the ball model includes no spin shaping. Even
+        small Magnus or backspin handling could let the controller hit
+        deeper without sailing.
+  \item \emph{Adversarial behaviour}: in two-player mode the controller
+        treats every incoming ball symmetrically and never targets a
+        weakness of the opponent. A simple model that biased the
+        return $y$-coordinate away from the opponent's last
+        successful intercept point would convert some of the
+        even rallies into wins.
+\end{enumerate}
+A complementary residual-RL pipeline (PPO over $\delta\in[-1,1]^{7}$
+added to the classical action) was prototyped to investigate
+items 1--3, but the present submission is fully classical.
