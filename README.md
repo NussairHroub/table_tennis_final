@@ -64,6 +64,9 @@ development tooling or provided-by-course material.
 ### 1. Install
 
 ```bash
+git clone git@github.com:NussairHroub/table_tennis_final.git
+cd table_tennis_final
+
 conda create -n table_tennis python=3.10 -y
 conda activate table_tennis
 conda install -c conda-forge pyqt -y
