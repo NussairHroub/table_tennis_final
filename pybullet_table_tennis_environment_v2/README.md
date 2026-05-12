@@ -14,7 +14,7 @@ plays competitive two-robot matches.
 
 This repository is my submission for the **ECE 275 (Spring 2026) term project** at KAUST.
 A complete write-up of the algorithm, the parameter-tuning methodology, and the results
-is in the accompanying the accompanying report PDF.
+is in the accompanying [`report.pdf`](../ECE275_Nussair_Hroub_TermProject/report.pdf).
 
 ---
 
@@ -165,7 +165,7 @@ executes the plan open-loop in joint space. Three components carry the load:
    a *mirror trick* for the right-hand robot to keep both arms on the same joint
    branch.
 
-A full derivation is in the accompanying report PDF.
+A full derivation is in the accompanying [`report.pdf`](../ECE275_Nussair_Hroub_TermProject/report.pdf).
 
 ---
 
@@ -274,7 +274,7 @@ simulator.
 
 `visualize_full_game.py` (this repo) overlays the planner's predictions on the
 PyBullet camera image and exports a GIF of the full game. Useful for debugging the
-controller and for the figures in the accompanying report PDF.
+controller and for the figures in the accompanying [`report.pdf`](../ECE275_Nussair_Hroub_TermProject/report.pdf).
 
 ```bash
 # Default (slightly slowed for clarity):

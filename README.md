@@ -14,18 +14,18 @@ tennis in PyBullet. Wins the single-player serve-return benchmark (5/5 games,
 
 The full algorithm description, parameter-tuning methodology, mirror-IK ablation,
 and the connection to ECE 275 course concepts are in the term-project report
-([`ECE275_Nussair_Hroub_TermProject/homework.pdf`](ECE275_Nussair_Hroub_TermProject/homework.pdf)).
+([`ECE275_Nussair_Hroub_TermProject/report.pdf`](ECE275_Nussair_Hroub_TermProject/report.pdf)).
 
 ---
 
 ## Repository layout
 
 ```
-term_project/
+table_tennis_final/
 ├── README.md                                    (this file)
 ├── ECE275_Nussair_Hroub_TermProject/            term-project report
-│   ├── homework.tex                              LaTeX source
-│   ├── homework.pdf                              built report (16 pages)
+│   ├── report.tex                                LaTeX source
+│   ├── report.pdf                                built report (16 pages)
 │   ├── sections/                                 .tex per section
 │   ├── configuration/                            packages, variables, commands
 │   ├── assets/                                   figures used in the report
@@ -119,7 +119,7 @@ python eval_rl.py --model runs/final_rl_2/best/best_model.zip --episodes 5
 | Parameter sweep size | 5,184 configurations × 5 seeds (~16 min, 16 workers) |
 
 A full breakdown is in
-[`ECE275_Nussair_Hroub_TermProject/homework.pdf`](ECE275_Nussair_Hroub_TermProject/homework.pdf).
+[`ECE275_Nussair_Hroub_TermProject/report.pdf`](ECE275_Nussair_Hroub_TermProject/report.pdf).
 
 ---
 
