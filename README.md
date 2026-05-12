@@ -61,23 +61,73 @@ development tooling or provided-by-course material.
 
 ## Quick start
 
+### 1. Install
+
 ```bash
 conda create -n table_tennis python=3.10 -y
 conda activate table_tennis
 conda install -c conda-forge pyqt -y
 pip install -r pybullet_table_tennis_environment_v2/requirements.txt
-
 cd pybullet_table_tennis_environment_v2
+```
 
-# Classical RobotPlayer
+> SSH users need X11 forwarding (`ssh -X`) for the matplotlib viewer and the
+> PyBullet GUI. Headless runs need no extra setup.
+
+### 2. Single-player benchmark (one robot returning serves)
+
+```bash
+# Headless — runs as fast as possible, prints score per episode
 python one_player_game.py --player robot --episodes 5
-python two_player_game.py --player1 robot --player2 robot --episodes 3
 
-# With the PyBullet GUI
+# Headless smoke test (one game)
+python one_player_game.py --player robot --episodes 1
+
+# With the PyBullet GUI (real-time, opens a window)
 python one_player_game.py --player robot --gui --episodes 1
 
-# Residual PPO policy on top of the classical expert (optional)
+# Baseline controllers for comparison
+python one_player_game.py --player simple --episodes 5
+python one_player_game.py --player idle   --episodes 3
+python one_player_game.py --player simple --gui --episodes 1
+```
+
+### 3. Two-player match (two robots, full game to 11 with 2-point lead)
+
+```bash
+# Headless, robot vs robot
+python two_player_game.py --player1 robot  --player2 robot  --episodes 3
+
+# Headless, robot vs simple baseline (both directions)
+python two_player_game.py --player1 robot  --player2 simple --episodes 3
+python two_player_game.py --player1 simple --player2 robot  --episodes 3
+
+# With the PyBullet GUI, robot vs robot, single match
+python two_player_game.py --player1 robot --player2 robot --gui --episodes 1
+
+# With the PyBullet GUI, robot vs simple
+python two_player_game.py --player1 robot --player2 simple --gui --episodes 1
+python two_player_game.py --player1 simple --player2 robot --gui --episodes 1
+
+# Sanity-check: a do-nothing opponent
+python two_player_game.py --player1 robot --player2 idle --episodes 1
+python two_player_game.py --player1 idle  --player2 robot --episodes 1
+```
+
+Available controllers: `robot` (this submission), `simple` (provided
+`SimpleTrackingPlayer`), `idle` (provided `DoNothingPlayer`).
+
+### 4. Residual PPO policy on top of the classical expert (optional)
+
+```bash
+# Evaluate the best-eval checkpoint (headless)
 python eval_rl.py --model runs/final_rl_2/best/best_model.zip --episodes 5
+
+# Evaluate the final checkpoint
+python eval_rl.py --model runs/final_rl_2/model.zip --episodes 5
+
+# Watch the trained policy in the PyBullet GUI
+python eval_rl.py --model runs/final_rl_2/best/best_model.zip --gui --episodes 1
 ```
 
 ---
